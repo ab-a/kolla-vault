@@ -1,0 +1,86 @@
+image: ubuntu:latest
+
+stages:
+  - setup
+  - push_in_vault
+  - add_vault_lookups
+  - push_changes
+
+variables:
+  VAULT_TOKEN: "$VAULT_TOKEN"
+  VAULT_URL: "http://127.0.0.1:8200"
+  KOLLA_CONFIG_PATH: "etc/kolla"
+  GIT_USER_NAME: "GitLab CI"
+  GIT_USER_EMAIL: "ci@example.com"
+
+compile:
+  stage: setup
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3-pip golang
+    - go mod init kolla-export-vault || true
+    - go get github.com/hashicorp/vault/api
+    - go get gopkg.in/yaml.v2
+  script:
+    - go build -o export_kolla_passwords store_kolla_passwords.go
+    - go build -o replace_passwords replace_passwords.go
+  artifacts:
+    paths:
+      - export_kolla_passwords
+      - replace_passwords
+
+kolla_genpwd:
+  stage: setup
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3-pip
+    - pip3 install kolla-ansible ansible --break-system-packages
+    - cp /usr/local/share/kolla-ansible/etc_examples/kolla/passwords.yml $KOLLA_CONFIG_PATH/passwords.yml
+  script:
+    - kolla-genpwd
+  artifacts:
+    paths:
+      - $KOLLA_CONFIG_PATH/passwords.yml
+
+push_in_vault:
+  stage: push_in_vault
+  script:
+    - ./export_kolla_passwords
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG == "KOLLA_BOOTSTRAP"'
+    - if: '$VAULT_PATH != "production"'
+    - when: never
+  needs: ["compile", "kolla_genpwd"]
+
+add_vault_lookups:
+  stage: add_vault_lookups
+  script:
+    - ./replace_passwords
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG == "KOLLA_BOOTSTRAP"'
+    - if: '$VAULT_PATH != "production"'
+    - when: never
+  artifacts:
+    paths:
+      - $KOLLA_CONFIG_PATH/passwords.yml
+  needs: ["compile", "kolla_genpwd", "push_in_vault"]
+
+push_changes:
+  stage: push_changes
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git
+  script:
+    - git config --global user.email "$GIT_USER_EMAIL"
+    - git config --global user.name "$GIT_USER_NAME"
+    - git reset --hard origin/main
+    - BRANCH_NAME="update-passwords-$(date +'%Y%m%d')"
+    - git checkout -b "$BRANCH_NAME"
+    - git add $KOLLA_CONFIG_PATH/passwords.yml
+    - git commit -m "Add protected passwords.yml"
+    - git push -u https://gitlab-ci-token:${PROJECT_ACCESS_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git  $BRANCH_NAME
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG == "KOLLA_BOOTSTRAP"'
+    - if: '$VAULT_PATH != "production"'
+    - when: never
+  needs: ["add_vault_lookups"]
