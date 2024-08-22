@@ -25,6 +25,6 @@ nova_api_database_password: '{{ lookup('community.general.hashi_vault', 'secret/
 
 Blog posts:
 
-[Hashicorp Vault and Kolla-Ansible, Part I: Integrate Vault secrets in your playbook](https://abayard.com/hashicorp-vault-and-kolla-ansible-part-i-integrate-secrets-in-playbook/)
+[Hashicorp Vault and Kolla Ansible, Part I: Integrate Vault secrets in your playbook](https://abayard.com/hashicorp-vault-and-kolla-ansible-part-i-integrate-secrets-in-playbook/)
 
 [Hashicorp Vault and Kolla Ansible, Part II: integration with Gitlab CI](https://abayard.com/hashicorp-vault-and-kolla-ansible-part-ii-integration-with-gitlab-ci/)
