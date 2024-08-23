@@ -9,7 +9,7 @@ Push kolla-ansible passwords in Hashicorp Vault and replace plaintext password b
 
 ## What are the scripts?
 - `store_kolla_passwords.go`: push the passwords from `passwords.yml` into Hashicorp Vault. Equivalent of `kolla-writepwd`.
-- `replace_passwords.go`: replace the plaintext passwords by lookups.
+- `replace_kolla_passwords.go`: replace the plaintext passwords by lookups.
 
 ## Initialization
 ```bash
@@ -23,13 +23,13 @@ go get gopkg.in/yaml.v2
 ## Run the scripts
 ```bash
 go run store_kolla_passwords.go
-go run replace_passwords.go
+go run replace_kolla_passwords.go
 ```
 
 ## Compile
 ```bash
 go build -o export_kolla_passwords store_kolla_passwords.go
-go build -o replace_passwords replace_passwords.go
+go build -o replace_kolla_passwords replace_kolla_passwords.go
 ```
 
 ## Snippet of `passwords.yml` lookups
