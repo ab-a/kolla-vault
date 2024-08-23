@@ -22,11 +22,11 @@ compile:
     - go get gopkg.in/yaml.v2
   script:
     - go build -o store_kolla_passwords store_kolla_passwords.go
-    - go build -o replace_passwords replace_passwords.go
+    - go build -o replace_kolla_passwords replace_kolla_passwords.go
   artifacts:
     paths:
       - store_kolla_passwords
-      - replace_passwords
+      - replace_kolla_passwords
 
 kolla_genpwd:
   stage: setup
@@ -54,7 +54,7 @@ push_in_vault:
 add_vault_lookups:
   stage: add_vault_lookups
   script:
-    - ./replace_passwords
+    - ./replace_kolla_passwords
   when: manual
   rules:
     - if: '$CI_COMMIT_TAG == "KOLLA_BOOTSTRAP"'
