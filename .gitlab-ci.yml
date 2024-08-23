@@ -21,11 +21,11 @@ compile:
     - go get github.com/hashicorp/vault/api
     - go get gopkg.in/yaml.v2
   script:
-    - go build -o export_kolla_passwords store_kolla_passwords.go
+    - go build -o store_kolla_passwords store_kolla_passwords.go
     - go build -o replace_passwords replace_passwords.go
   artifacts:
     paths:
-      - export_kolla_passwords
+      - store_kolla_passwords
       - replace_passwords
 
 kolla_genpwd:
@@ -43,7 +43,7 @@ kolla_genpwd:
 push_in_vault:
   stage: push_in_vault
   script:
-    - ./export_kolla_passwords
+    - ./store_kolla_passwords
   when: manual
   rules:
     - if: '$CI_COMMIT_TAG == "KOLLA_BOOTSTRAP"'
